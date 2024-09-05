@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--SETUP AND TITLE-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEMO 001</title>
+</head>
+<body>
+    <!--BUTTON TO RUN FUNCTION-->
+    <button id="button">PLACE HOLDER</button>
+    <script>
+        document.getElementById('button').addEventListener('click', function() {
+            fetch('/process', {method: 'POST'})
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    </script>
+</body>
+</html>
