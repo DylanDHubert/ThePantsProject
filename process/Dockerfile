@@ -2,11 +2,11 @@ FROM python:alpine
 
 WORKDIR /app
 
-COPY . /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir flask
+COPY . .
 
-EXPOSE 8000
+EXPOSE 8080
 
-CMD ["python", "process.py"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8080"]

@@ -1,23 +1,25 @@
-version: "3.9"
-
 services:
   server:
     build: server
     container_name: server
     ports:
-      - "5000:5000"
+      - "8000:8000"
     networks:
       - ThePantsProject
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ./server:/app
+    command: python manage.py runserver 0.0.0.0:8000
 
   process:
     build: process
     container_name: process
     ports:
-      - "8000:8000"
+      - "8080:8080"
     networks:
       - ThePantsProject
+    volumes:
+      - ./process:/app
+    command: python manage.py runserver 0.0.0.0:8080
 
 networks:
   ThePantsProject:

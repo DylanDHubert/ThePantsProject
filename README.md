@@ -1,40 +1,44 @@
-    images — contains:
+# The Pants Project
 
-        ["1.jpg", "2.jpg"] — images for testing
+## Project Structure
+- `server/`: Django server
+- `process/`: Django process service
+- `pyproject.toml`: Poetry dependency management
+- `docker-compose.yml`: Docker configuration
 
-    process — contains:
+## Setup
 
-        Dockerfile — used to configure process image in Docker network
+### Prerequisites
+- Python 3.9+
+- Poetry
+- Docker and Docker Compose (optional)
+
+### Local Development
+
+1. Install dependencies:
+    poetry install
+
+2. Run server:
+    cd server
+    poetry run python manage.py runserver
     
-        process.py — flask server that has a test function
+### Docker Development
+1. Build and start services:
+    docker-compose up --build
 
-    server — contains:
+## Project Evolution
 
-        templates — contains:
-    
-            index.html — test HTML
+1. Migrated from Flask to Django for both server and process services.
+- Reason: Django provides a more robust framework for larger applications. Also some experience.
 
-        Dockerfile — used to configure process image in Docker network
+2. Implemented Poetry for dependency management.
+- Reason: Ensures consistent environments across development machines.
 
-            app.py — flask server to run HTML and call "process" server
+3. Maintained Docker setup for containerization.
+- Reason: Facilitates consistent deployment and scaling.
 
-    docker-compose.yml — docker–compose file to build network and images
+## Notes
 
-    README.md — this document :)
-
----
-
-    0. Install Docker
-
-    1. Set This Directory to Working Directory with cd in Terminal
-    2. To Build Docker "Stuff" Run Command:
-        docker-compose up --build
-    2.5 To Remove Docker "Stuff" Run Command:
-        docker-compose down
-    3. To Update Docker Images Run Command in (2.)
-    
-    We now have two docker images, each with a running container:
-        server (as https://server:5000 or https://localhost:5000)
-        process (as https://process:8000 or https://localhost:8000)
-    Server runs the server, and process can run anything else... (to be called by server)
-        
+- Use Poetry for running Django commands and managing dependencies.
+- Docker setup allows for isolated, reproducible environments.
+- `pyproject.toml` at root manages dependencies for both services.
