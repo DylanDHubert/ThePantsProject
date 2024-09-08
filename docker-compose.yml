@@ -1,24 +1,11 @@
-version: "3.9"
+version: '3'
 
 services:
   server:
-    build: server
+    build: ../djangoTemplate copy
     container_name: server
-    ports:
-      - "5000:5000"
-    networks:
-      - ThePantsProject
+    command: python manage.py runserver '0.0.0.0:5000'
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
-  process:
-    build: process
-    container_name: process
+      - .:/app
     ports:
-      - "8000:8000"
-    networks:
-      - ThePantsProject
-
-networks:
-  ThePantsProject:
-    driver: bridge
+      - '5000:5000'
