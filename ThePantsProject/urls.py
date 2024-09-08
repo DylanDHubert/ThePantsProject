@@ -21,5 +21,8 @@ from server import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
-    path('process/', views.process, name='process'),
+    path('login/', views.login_handler, name='login'),
+    path('signup/', views.signup_handler, name='signup'),    
+    path('logout/', views.logout_handler, name='logout'),
+
 ]

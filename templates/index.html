@@ -1,25 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!--SETUP AND TITLE-->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DJANGO TEMPLATE</title>
+    <title>Index Page</title>
 </head>
 <body>
-    <!--BUTTON TO RUN FUNCTION-->
-    <button id="button">CALL FUNCTION</button>
-    <script>
-        document.getElementById('button').addEventListener('click', function() {
-            fetch('/process', {method: 'POST'})
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        });
-    </script>
+    <h1>Welcome to the Index Page</h1>
+    <p>You are logged in as: {{ user.username }}</p>
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
 </body>
 </html>
