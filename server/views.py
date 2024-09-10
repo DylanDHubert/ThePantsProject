@@ -2,6 +2,12 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+
+
+import pandas as pd
+import plotly.io as pio
+import plotly.graph_objects as go
 
 DEBUG = True
 
@@ -70,3 +76,44 @@ def logout_handler(request):
     logout(request)
     if DEBUG: print("LOGOUT CONFIRMED")
     return redirect("login")
+
+
+"""
+SCATTER PLOT...
+???
+"""
+df = pd.read_csv("data.csv")
+
+heatmap_data = go.Histogram2d(
+    x=df['x'],
+    y=df['y'],
+    colorscale=[[0, 'rgba(0,0,0,0)'], [1, '#55B059']],
+    zsmooth=None,
+    nbinsy=50,
+    nbinsx=100,
+    hovertemplate='<b>X:</b> %{x}<br><b>Y:</b> %{y}<br><b>Density:</b> %{z}<extra></extra>',
+    showscale=False,
+)
+
+fig = go.Figure(data=heatmap_data)
+fig.update_layout(
+    title='VGG Latent Space of 1000 Pants',
+    xaxis=dict(
+        showgrid=False,
+        zeroline=False,
+        showticklabels=False,
+        showline=False,
+    ),
+    yaxis=dict(
+        showgrid=False,
+        zeroline=False,
+        showticklabels=False,
+        showline=False,
+    ),
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    )
+
+def plot(request):
+    plot_html = pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
+    return HttpResponse(plot_html, content_type='text/html')
