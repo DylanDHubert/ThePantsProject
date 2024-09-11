@@ -2,21 +2,15 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+import json
 
-
+import numpy as np
 import pandas as pd
 import plotly.io as pio
 import plotly.graph_objects as go
 
 DEBUG = True
-
-
-@login_required
-def index(request):
-    if DEBUG: print("index.html REQUESTED")
-    return render(request, "index.html")
-
 
 """
 HANDLES LOGIN FOR USERS...
@@ -82,38 +76,73 @@ def logout_handler(request):
 SCATTER PLOT...
 ???
 """
-df = pd.read_csv("data.csv")
-
-heatmap_data = go.Histogram2d(
-    x=df['x'],
-    y=df['y'],
-    colorscale=[[0, 'rgba(0,0,0,0)'], [1, '#55B059']],
-    zsmooth=None,
-    nbinsy=50,
-    nbinsx=100,
-    hovertemplate='<b>X:</b> %{x}<br><b>Y:</b> %{y}<br><b>Density:</b> %{z}<extra></extra>',
-    showscale=False,
-)
-
-fig = go.Figure(data=heatmap_data)
-fig.update_layout(
-    title='VGG Latent Space of 1000 Pants',
-    xaxis=dict(
-        showgrid=False,
-        zeroline=False,
-        showticklabels=False,
-        showline=False,
-    ),
-    yaxis=dict(
-        showgrid=False,
-        zeroline=False,
-        showticklabels=False,
-        showline=False,
-    ),
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
+def create_plot(df):
+    heatmap_data = go.Histogram2d(
+        x=df['x'],
+        y=df['y'],
+        colorscale=[[0, 'rgba(0,0,0,0)'], [1, '#89764a ']],
+        zsmooth=None,
+        nbinsy=50,
+        nbinsx=100,
+        hovertemplate='<b>X:</b> %{x}<br><b>Y:</b> %{y}<br><b>Density:</b> %{z}<extra></extra>',
+        showscale=False,
     )
 
-def plot(request):
-    plot_html = pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
-    return HttpResponse(plot_html, content_type='text/html')
+    fig = go.Figure(data=heatmap_data)
+    fig.update_layout(
+        title='VGG Latent Space of 1000 Pants',
+        xaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            showline=False,
+        ),
+        yaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            showline=False,
+        ),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        )
+
+    return pio.to_json(fig)
+
+df = pd.read_csv("data.csv")
+plot_data = create_plot(df)
+
+@login_required
+def index(request):
+    if DEBUG: print("index.html REQUESTED")
+    return render(request, 'index.html', {'plot_data': plot_data})
+
+
+def click(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            x = data.get('x')
+            y = data.get('y')
+
+            df['distance'] = np.sqrt((df['x'] - x) ** 2 + (df['y'] - y) ** 2)
+
+            top_4_filenames = df.nsmallest(4, 'distance')['filename'].to_list()
+            B = False
+            for i in range(3):
+                if B: break
+                for j in range(i,4):
+                    print(top_4_filenames[i])
+                    if top_4_filenames[i][-20:] == top_4_filenames[j][-20:]:
+                        del top_4_filenames[j]
+                        B = True
+                        break
+            if len(top_4_filenames) == 4: top_3_filenames = top_4_filenames[:-1]
+            else: top_3_filenames = top_4_filenames
+            print(top_3_filenames)
+
+            return render(request, 'index.html', {'top_3_filenames': top_3_filenames})
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'})

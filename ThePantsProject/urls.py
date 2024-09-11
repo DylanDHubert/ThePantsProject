@@ -17,6 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from server import views
+from django.views.static import serve
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,5 +27,8 @@ urlpatterns = [
     path('login/', views.login_handler, name='login'),
     path('signup/', views.signup_handler, name='signup'),    
     path('logout/', views.logout_handler, name='logout'),
-    path('plot/', views.plot, name='plot')
+    path('click/', views.click, name='click'),
+    path('external-images/<path:filename>', serve, {'document_root': '/users/dylanhubert/Downloads/images/'}, name='external-images')
 ]
+
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

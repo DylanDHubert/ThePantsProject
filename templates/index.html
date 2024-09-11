@@ -32,7 +32,7 @@
         }
 
         .logout button {
-            background-color: #4CAF50;
+            background-color: #d7c28f;
             color: white;
             padding: 8px 16px;
             border: none;
@@ -42,7 +42,7 @@
         }
 
         .logout button:hover {
-            background-color: #45a049;
+            background-color: #c8b485;
         }
 
         .content {
@@ -84,6 +84,7 @@
             margin-bottom: 10px;
         }
     </style>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
 
@@ -97,7 +98,41 @@
 
     <div class="content">
         <div class="scatter-container">
-            <iframe src="/plot/" style="width: 100%; height: 100%; border: 0;"></iframe>
+            <div id="scatter-plot" style="width: 100%; height: 100%;"></div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var plotData = {{ plot_data|safe }};
+                    Plotly.newPlot('scatter-plot', plotData.data, plotData.layout);
+
+                    var plotDiv = document.getElementById('scatter-plot');
+                    plotDiv.on('plotly_click', function(eventData) {
+                        var x = eventData.points[0].x;
+                        var y = eventData.points[0].y;
+
+                        console.log('Clicked point:', x, y);
+
+                        // Send data to the server
+                        fetch('/click/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({
+                                x: x,
+                                y: y
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Server response:', data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                    });
+                });
+            </script>
         </div>
         <div class="images-container">
             <img src="https://via.placeholder.com/150" alt="Image 1">
@@ -105,6 +140,5 @@
             <img src="https://via.placeholder.com/150" alt="Image 3">
         </div>
     </div>
-
 </body>
 </html>
