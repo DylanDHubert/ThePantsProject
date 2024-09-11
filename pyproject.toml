@@ -1,22 +1,18 @@
 [tool.poetry]
-name = "pantsproject"
-version = "0.1.0"
-description = ""
-authors = ["Luke and Dylan"]
-readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
 django = "^5.1.1"
+numpy = "^2.1.1"
+pandas = "^2.2.2"
+plotly = "^5.24.0"
+dropbox = "^12.0.2"
+environ = "^1.0"
+django-environ = "^0.11.2"
+load-dotenv = "^0.1.0"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[
-tool.poetry.scripts
-]
-server = "python manage.py runserver"
-migrate = "python manage.py migrate"
-makemigrations = "python manage.py makemigrations"

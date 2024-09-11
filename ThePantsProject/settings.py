@@ -12,9 +12,39 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Initialize environ
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False)
+)
+
+# Attempt to read .env file
+env_file = os.path.join(BASE_DIR, '.env')
+if os.path.isfile(env_file):
+    print(f"Loading .env from: {env_file}")  
+    environ.Env.read_env(env_file)
+else:
+    print(f".env file not found at {env_file}")
+
+# Access environment variables
+try:
+    DROPBOX_ACCESS_TOKEN = env('DROPBOX_ACCESS_TOKEN')
+    print(f"DROPBOX_ACCESS_TOKEN loaded: {'*' * len(DROPBOX_ACCESS_TOKEN)}")  # Masking the actual token
+except environ.ImproperlyConfigured as e:
+    print(f"Failed to load DROPBOX_ACCESS_TOKEN: {e}")
+    DROPBOX_ACCESS_TOKEN = None
+
+try:
+    DROPBOX_IMAGE_FOLDER = env('DROPBOX_IMAGE_FOLDER')
+    print(f"DROPBOX_IMAGE_FOLDER loaded: {DROPBOX_IMAGE_FOLDER}")
+except environ.ImproperlyConfigured as e:
+    print(f"Failed to load DROPBOX_IMAGE_FOLDER: {e}")
+    DROPBOX_IMAGE_FOLDER = None
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/

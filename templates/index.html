@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,7 +24,8 @@
             padding: 10px 20px;
             background-color: #f0f0f0;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            height: 60px; /* Fixed height */
+            height: 60px;
+            /* Fixed height */
         }
 
         .header p {
@@ -54,7 +56,8 @@
         }
 
         .scatter-container {
-            flex: 0.875; /* 87.5% of the width */
+            flex: 0.875;
+            /* 87.5% of the width */
             margin-right: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -72,22 +75,31 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            flex: 0.125; /* 12.5% of the width */
+            flex: 0.125;
+            /* 12.5% of the width */
         }
 
         .images-container img {
-            width: 100%; /* Take full width of the container */
-            aspect-ratio: 1 / 1; /* Ensure square images */
+            width: 100%;
+            /* Take full width of the container */
+            aspect-ratio: 1 / 1;
+            /* Ensure square images */
             object-fit: cover;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             margin-bottom: 10px;
         }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
     </style>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
-<body>
 
+<body>
     <div class="header">
         <p>You are logged in as: <strong>{{ user.username }}</strong></p>
         <form action="{% url 'logout' %}" method="post" class="logout">
@@ -99,46 +111,58 @@
     <div class="content">
         <div class="scatter-container">
             <div id="scatter-plot" style="width: 100%; height: 100%;"></div>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var plotData = {{ plot_data|safe }};
-                    Plotly.newPlot('scatter-plot', plotData.data, plotData.layout);
-
-                    var plotDiv = document.getElementById('scatter-plot');
-                    plotDiv.on('plotly_click', function(eventData) {
-                        var x = eventData.points[0].x;
-                        var y = eventData.points[0].y;
-
-                        console.log('Clicked point:', x, y);
-
-                        // Send data to the server
-                        fetch('/click/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': '{{ csrf_token }}'
-                            },
-                            body: JSON.stringify({
-                                x: x,
-                                y: y
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log('Server response:', data);
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                        });
-                    });
-                });
-            </script>
         </div>
-        <div class="images-container">
-            <img src="https://via.placeholder.com/150" alt="Image 1">
-            <img src="https://via.placeholder.com/150" alt="Image 2">
-            <img src="https://via.placeholder.com/150" alt="Image 3">
+        <div class="images-container" id="images-container">
+            <!-- Images will be dynamically inserted here -->
         </div>
+        <div class="loading" id="loading">Loading images...</div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var plotData = JSON.parse('{{ plot_data|escapejs }}');
+            Plotly.newPlot('scatter-plot', plotData.data, plotData.layout);
+
+            var plotDiv = document.getElementById('scatter-plot');
+            var imagesContainer = document.getElementById('images-container');
+
+            plotDiv.on('plotly_click', function(eventData) {
+                var x = eventData.points[0].x;
+                var y = eventData.points[0].y;
+
+                console.log('Clicked point:', x, y);
+
+                fetch('/click/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ x: x, y: y })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Server response:', data);
+                    if (data.status === 'success' && data.image_links) {
+                        imagesContainer.innerHTML = ''; 
+                        data.image_links.forEach(link => {
+                            if (link) {
+                                var img = document.createElement('img');
+                                img.src = link;
+                                img.alt = 'Dropbox Image';
+                                img.className = 'dropbox-image';
+                                imagesContainer.appendChild(img);
+                            }
+                        });
+                    } else {
+                        console.error('Error fetching images:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
