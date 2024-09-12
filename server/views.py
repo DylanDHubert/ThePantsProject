@@ -4,10 +4,13 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
+from dropbox.exceptions import AuthError 
+
 import json
 import os
 
 
+from dotenv import load_dotenv
 from dropbox import Dropbox
 
 import numpy as np
@@ -17,7 +20,7 @@ import plotly.graph_objects as go
 
 DEBUG = True
 
-
+load_dotenv()
 """
 HANDLES LOGIN FOR USERS...
 MAIN PAGE (INDEX) REQUIRES VALID LOG IN
@@ -173,20 +176,27 @@ def click(request):
             top_3_filenames = remove_duplicate_style(top_4_filenames)
             print(f"Top 3 filenames: {top_3_filenames}")
 
-            # Initialize Dropbox
-            dbx = Dropbox(settings.DROPBOX_ACCESS_TOKEN)
-            print("Dropbox initialized")
+            # Initialize Dropbox with refresh capabilities
+            dbx = Dropbox(
+                app_secret=os.getenv('DROPBOX_APP_SECRET'),
+                oauth2_refresh_token=os.getenv('DROPBOX_REFRESH_TOKEN'),
+                app_key=os.getenv('DROPBOX_APP_KEY')
+            )
+            print("Dropbox initialized with refresh capability")
 
             # Get temporary links for the top 3 images
             image_links = []
             for filename in top_3_filenames:
                 try:
-                    # Ensure the file path is correctly formatted
-                    
                     print(f"Attempting to get temporary link for: {filename}")
                     temp_link = dbx.files_get_temporary_link(filename)
                     image_links.append(temp_link.link)
                     print(f"Successfully got link for {filename}")
+                except AuthError as auth_error:
+                    print(f"Authentication error: {str(auth_error)}")
+                    # If it's an expired access token, the SDK should automatically refresh it
+                    # If it persists, there might be an issue with the refresh token
+                    image_links.append(None)
                 except Exception as e:
                     print(f"Error getting Dropbox link for {filename}: {str(e)}")
                     image_links.append(None)

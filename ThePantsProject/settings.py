@@ -14,37 +14,42 @@ from pathlib import Path
 import os
 import environ
 
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Initialize environ
-env = environ.Env(
-    # set casting, default value
-    DEBUG=(bool, False)
-)
+env = environ.Env()
 
-# Attempt to read .env file
+# Read .env file
 env_file = os.path.join(BASE_DIR, '.env')
 if os.path.isfile(env_file):
-    print(f"Loading .env from: {env_file}")  
-    environ.Env.read_env(env_file)
+    print(f".env file found at {env_file}")
+    env.read_env(env_file)
 else:
     print(f".env file not found at {env_file}")
 
-# Access environment variables
+# Now you can use env to get your variables
 try:
-    DROPBOX_ACCESS_TOKEN = env('DROPBOX_ACCESS_TOKEN')
-    print(f"DROPBOX_ACCESS_TOKEN loaded: {'*' * len(DROPBOX_ACCESS_TOKEN)}")  # Masking the actual token
+    DROPBOX_REFRESH_TOKEN = env('DROPBOX_REFRESH_TOKEN')
+    print("DROPBOX_REFRESH_TOKEN loaded successfully")
 except environ.ImproperlyConfigured as e:
-    print(f"Failed to load DROPBOX_ACCESS_TOKEN: {e}")
-    DROPBOX_ACCESS_TOKEN = None
+    print(f"Failed to load DROPBOX_REFRESH_TOKEN: {e}")
+    DROPBOX_REFRESH_TOKEN = None
 
 try:
-    DROPBOX_IMAGE_FOLDER = env('DROPBOX_IMAGE_FOLDER')
-    print(f"DROPBOX_IMAGE_FOLDER loaded: {DROPBOX_IMAGE_FOLDER}")
+    DROPBOX_APP_KEY = env('DROPBOX_APP_KEY')
+    print("DROPBOX_APP_KEY loaded successfully")
 except environ.ImproperlyConfigured as e:
-    print(f"Failed to load DROPBOX_IMAGE_FOLDER: {e}")
-    DROPBOX_IMAGE_FOLDER = None
+    print(f"Failed to load DROPBOX_APP_KEY: {e}")
+    DROPBOX_APP_KEY = None
+try:
+    DROPBOX_APP_SECRET = env('DROPBOX_APP_SECRET')
+    print("DROPBOX_APP_KEY loaded successfully")
+except environ.ImproperlyConfigured as e:
+    print(f"Failed to load DROPBOX_APP_SECRET: {e}")
+    DROPBOX_APP_SECRET = None
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
