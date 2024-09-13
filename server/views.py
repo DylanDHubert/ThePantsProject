@@ -9,7 +9,6 @@ from dropbox.exceptions import AuthError
 import json
 import os
 
-
 from dotenv import load_dotenv
 from dropbox import Dropbox
 
@@ -109,8 +108,8 @@ def create_plot(df):
         y=df["y"],
         colorscale=[[0, "rgba(0,0,0,0)"], [1, "#89764a "]],
         zsmooth=None,
-        nbinsy=50,
-        nbinsx=100,
+        nbinsy=75,
+        nbinsx=150,
         hovertemplate="<b>X:</b> %{x}<br><b>Y:</b> %{y}<br><b>Density:</b> %{z}<extra></extra>",
         showscale=False,
     )
