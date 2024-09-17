@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #e3e3d2, #ACB6E5);
+            background: #FFFFFF;
             color: #333;
             height: 100vh;
             display: flex;
@@ -24,7 +24,7 @@
             padding: 10px 20px;
             background-color: #f0f0f0;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            height: 60px;
+            height: 30px;
             /* Fixed height */
         }
 
@@ -34,7 +34,7 @@
         }
 
         .logout button {
-            background-color: #d7c28f;
+            background-color: #748386;
             color: white;
             padding: 8px 16px;
             border: none;
@@ -56,11 +56,10 @@
         }
 
         .scatter-container {
-            flex: 0.875;
-            /* 87.5% of the width */
+            flex: 0.5;
             margin-right: 20px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -72,22 +71,20 @@
         }
 
         .images-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            flex: 0.125;
-            /* 12.5% of the width */
+            display: grid;
+            grid-template-columns: repeat(4, 2fr);
+            grid-template-rows: repeat(2, 2fr);
+            gap: 10px; /* Adjust the gap between images */
+            flex: 0.5; /* Adjust flex if needed to fit your layout */
+            overflow-y: auto; /* Enable scrolling if needed */
         }
 
         .images-container img {
             width: 100%;
-            /* Take full width of the container */
+
             aspect-ratio: 1 / 1;
-            /* Ensure square images */
             object-fit: cover;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 10px;
+            border-radius: 5px; /* Adjust border radius if needed */
         }
 
         .loading {

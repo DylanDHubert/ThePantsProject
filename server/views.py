@@ -107,16 +107,16 @@ def create_plot(df):
         x=df["x"],
         y=df["y"],
         colorscale=[[0, "rgba(0,0,0,0)"], [1, "#89764a "]],
-        zsmooth=None,
-        nbinsy=75,
-        nbinsx=150,
+        zsmooth=False,
+        nbinsy=200,
+        nbinsx=200,
         hovertemplate="<b>X:</b> %{x}<br><b>Y:</b> %{y}<br><b>Density:</b> %{z}<extra></extra>",
         showscale=False,
     )
 
     fig = go.Figure(data=heatmap_data)
     fig.update_layout(
-        title="VGG Latent Space of 1000 Pants",
+        title="VGG Latent Space of 5K Pants",
         xaxis=dict(
             showgrid=False,
             zeroline=False,
@@ -136,7 +136,34 @@ def create_plot(df):
     return pio.to_json(fig)
 
 
+def whiten_data(df, columns):
+    # Extract the data to be whitened
+    data = df[columns].values
+
+    # Standardize the data
+    data_mean = np.mean(data, axis=0)
+    data_std = np.std(data, axis=0, ddof=0)
+    data_standardized = (data - data_mean) / data_std
+
+    # Compute covariance matrix
+    cov_matrix = np.cov(data_standardized, rowvar=False)
+
+    # Perform eigen-decomposition
+    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
+
+    # Compute whitening matrix
+    whitening_matrix = eigenvectors @ np.diag(1.0 / np.sqrt(eigenvalues)) @ eigenvectors.T
+
+    # Apply whitening
+    data_whitened = data_standardized @ whitening_matrix
+
+    # Update DataFrame
+    df[columns] = data_whitened
+    return df
+
+
 df = pd.read_csv("data.csv")
+df = whiten_data(df, ['x', 'y'])
 plot_data = create_plot(df)
 
 
@@ -156,9 +183,7 @@ def remove_duplicate_style(filenames):
     for filename in filenames:
         if not any(filename[-20:] == f[-20:] for f in result):
             result.append(filename)
-        if len(result) == 3:
-            break
-    return result
+    return result[0:8]
 
 
 def click(request):
@@ -171,9 +196,9 @@ def click(request):
             print(f"Received coordinates: x={x}, y={y}")
 
             df["distance"] = np.sqrt((df["x"] - x) ** 2 + (df["y"] - y) ** 2)
-            top_4_filenames = df.nsmallest(4, "distance")["filename"].to_list()
-            top_3_filenames = remove_duplicate_style(top_4_filenames)
-            print(f"Top 3 filenames: {top_3_filenames}")
+            N = 17
+            top_N_filenames = df.nsmallest(N, "distance")["filename"].to_list()
+            top_N_filenames = remove_duplicate_style(top_N_filenames)
 
             # Initialize Dropbox with refresh capabilities
             dbx = Dropbox(
@@ -183,9 +208,10 @@ def click(request):
             )
             print("Dropbox initialized with refresh capability")
 
+
             # Get temporary links for the top 3 images
             image_links = []
-            for filename in top_3_filenames:
+            for filename in top_N_filenames:
                 try:
                     print(f"Attempting to get temporary link for: {filename}")
                     temp_link = dbx.files_get_temporary_link(filename)
