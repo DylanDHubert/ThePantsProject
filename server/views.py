@@ -18,13 +18,18 @@ import plotly.io as pio
 import plotly.graph_objects as go
 
 DEBUG = True
-
 load_dotenv()
-"""
-HANDLES LOGIN FOR USERS...
-MAIN PAGE (INDEX) REQUIRES VALID LOG IN
-BUILD USING DJANGO SYSTEM
-"""
+
+CATEGORY = ...  # ie CATEGORY in ["mens_pants", "mens_shirts", etc]
+# CATEGORY SHOULD BE UPDATED BASED UPON DROPDOWN SELECTION
+# WHICH MEANS DROPDOWN NEEDS TO CALL A FUNCTION HERE IN views.py THAT CHANGES THE STATE OF CATEGORY
+# AND RE–RENDERS index.html ACCORDINGLY
+
+@login_required
+def index(request):
+    if DEBUG:
+        print("index.html REQUESTED")
+    return render(request, "index.html", {"plot_data": plot})
 
 
 def login_handler(request):
@@ -57,12 +62,6 @@ def login_handler(request):
         return render(request, "login.html")
 
 
-"""
-HANDLES SIGNUP FOR NEW USERS...
-BUILD USING DJANGO SYSTEM
-"""
-
-
 def signup_handler(request):
     if request.method == "POST":
         form = UserCreationForm(request.POST)
@@ -83,23 +82,11 @@ def signup_handler(request):
     return render(request, "signup.html", {"form": form})
 
 
-"""
-HANDLES LOGOUT...
-BUILD USING DJANGO SYSTEM
-"""
-
-
 def logout_handler(request):
     logout(request)
     if DEBUG:
         print("LOGOUT CONFIRMED")
     return redirect("login")
-
-
-"""
-SCATTER PLOT...
-???
-"""
 
 
 def create_plot(df):
@@ -113,7 +100,7 @@ def create_plot(df):
         hovertemplate="<b>X:</b> %{x}<br><b>Y:</b> %{y}<br><b>Density:</b> %{z}<extra></extra>",
         showscale=False,
     )
-
+    config = {'displayModeBar': False}
     fig = go.Figure(data=heatmap_data)
     fig.update_layout(
         title="VGG Latent Space of 5K Pants",
@@ -131,61 +118,16 @@ def create_plot(df):
         ),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
+        modebar=dict(
+            orientation='v',
+            bgcolor='rgba(0,0,0,0)',  # Set modebar background color to transparent
+            activecolor='rgba(0,0,0,0)',  # Set modebar active color to transparent
+        ),
     )
 
     return pio.to_json(fig)
 
-
-def whiten_data(df, columns):
-    # Extract the data to be whitened
-    data = df[columns].values
-
-    # Standardize the data
-    data_mean = np.mean(data, axis=0)
-    data_std = np.std(data, axis=0, ddof=0)
-    data_standardized = (data - data_mean) / data_std
-
-    # Compute covariance matrix
-    cov_matrix = np.cov(data_standardized, rowvar=False)
-
-    # Perform eigen-decomposition
-    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
-
-    # Compute whitening matrix
-    whitening_matrix = eigenvectors @ np.diag(1.0 / np.sqrt(eigenvalues)) @ eigenvectors.T
-
-    # Apply whitening
-    data_whitened = data_standardized @ whitening_matrix
-
-    # Update DataFrame
-    df[columns] = data_whitened
-    return df
-
-
-df = pd.read_csv("data.csv")
-df = whiten_data(df, ['x', 'y'])
-plot_data = create_plot(df)
-
-
-@login_required
-def index(request):
-    if DEBUG:
-        print("index.html REQUESTED")
-    return render(request, "index.html", {"plot_data": plot_data})
-
-
-"""
-FUNCTION USED IN --> click()
-
-"""
-def remove_duplicate_style(filenames):
-    result = []
-    for filename in filenames:
-        if not any(filename[-20:] == f[-20:] for f in result):
-            result.append(filename)
-    return result[0:8]
-
-
+# THIS FUNCTION SHOULD LOOK AT GLOBAL VARIABLE CATEGORYS AND ENSURE df CORRESPONDS
 def click(request):
     if request.method == "POST":
         print("Received POST request to /click/")
@@ -234,3 +176,60 @@ def click(request):
     else:
         print("Received non-POST request to /click/")
         return JsonResponse({"status": "error", "message": "Invalid request method"})
+
+
+def remove_duplicate_style(filenames):
+    result = []
+    for filename in filenames:
+        if not any(filename[-20:] == f[-20:] for f in result):
+            result.append(filename)
+    return result[0:8]
+
+
+def whiten_data(df, columns):
+    # Extract the data to be whitened
+    data = df[columns].values
+
+    # Standardize the data
+    data_mean = np.mean(data, axis=0)
+    data_std = np.std(data, axis=0, ddof=0)
+    data_standardized = (data - data_mean) / data_std
+
+    # Compute covariance matrix
+    cov_matrix = np.cov(data_standardized, rowvar=False)
+
+    # Perform eigen-decomposition
+    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
+
+    # Compute whitening matrix
+    whitening_matrix = eigenvectors @ np.diag(1.0 / np.sqrt(eigenvalues)) @ eigenvectors.T
+
+    # Apply whitening
+    data_whitened = data_standardized @ whitening_matrix
+
+    # Update DataFrame
+    df[columns] = data_whitened
+    return df
+
+
+def dropdown(request):
+    # FUNCTION HERE
+    if request.method == "POST":
+        return -1
+        # GET THE POST DATA, SEE WHAT CATEGORY IS SELECTED,
+        # OR, SET GLOBAL VARIABLE CATEGORY => "request.CATEGORY"
+        # RETURN EXACTLY THIS: render(request, "index.html", {"plot_data": plot})
+
+
+# CODE TO READ AND MANIPLATE DATA BEFORE PLOTTING
+def read_data_create_plot(CATEGORY):
+    # UPDATE TO READ CORRESPONDING
+    df = pd.read_csv(CATEGORY)
+    df = whiten_data(df, ['x', 'y'])
+    plot = create_plot(df)
+    return (df, plot)
+
+df, plot = read_data_create_plot("data.csv")
+
+# READ OTHER CSV FILE...
+# IE. mens_shirts_df = pd.read_csv("data.csv")
