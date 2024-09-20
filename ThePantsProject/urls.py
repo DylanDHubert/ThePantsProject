@@ -28,7 +28,8 @@ urlpatterns = [
     path('signup/', views.signup_handler, name='signup'),    
     path('logout/', views.logout_handler, name='logout'),
     path('click/', views.click, name='click'),
-    path('external-images/<path:filename>', serve, {'document_root': '/users/dylanhubert/Downloads/images/'}, name='external-images')
+    path('external-images/<path:filename>', serve, {'document_root': '/users/dylanhubert/Downloads/images/'}, name='external-images'),
+    path('dropdown/', views.dropdown, name='dropdown')
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
