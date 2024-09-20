@@ -1,3 +1,9 @@
 from django.db import models
 
-# Create your models here.
+class FileCoordinate(models.Model):
+    filename = models.CharField(max_length=512)
+    x = models.FloatField()
+    y = models.FloatField()
+
+    class Meta:
+        db_table = 'mens_pants'
