@@ -4,7 +4,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
-from dropbox.exceptions import AuthError 
+from dropbox.exceptions import AuthError
+from django.db import connections
 
 import json
 import os
@@ -137,9 +138,8 @@ def click(request):
             y = data.get("y")
             print(f"Received coordinates: x={x}, y={y}")
 
-            df["distance"] = np.sqrt((df["x"] - x) ** 2 + (df["y"] - y) ** 2)
-            N = 17
-            top_N_filenames = df.nsmallest(N, "distance")["filename"].to_list()
+            N = 16
+            top_N_filenames = get_most_similar(x_input=x, y_input=y, N=N)
             top_N_filenames = remove_duplicate_style(top_N_filenames)
 
             # Initialize Dropbox with refresh capabilities
@@ -186,30 +186,27 @@ def remove_duplicate_style(filenames):
     return result[0:8]
 
 
-def whiten_data(df, columns):
-    # Extract the data to be whitened
-    data = df[columns].values
+def get_most_similar(x_input, y_input, N=5):
+    x_input = float(x_input)
+    y_input = float(y_input)
+    N = int(N)
+    with connections['data'].cursor() as cursor:
+        # SQL query to find the top N closest points
+        query = '''
+        SELECT filename
+        FROM mens_pants
+        JOIN mens_pants_rtree ON mens_pants.rowid = mens_pants_rtree.id
+        ORDER BY ((mens_pants_rtree.min_x - ?) * (mens_pants_rtree.min_x - ?) +
+                  (mens_pants_rtree.min_y - ?) * (mens_pants_rtree.min_y - ?)) ASC
+        LIMIT ?;
+        '''
 
-    # Standardize the data
-    data_mean = np.mean(data, axis=0)
-    data_std = np.std(data, axis=0, ddof=0)
-    data_standardized = (data - data_mean) / data_std
+        cursor.execute(query, [x_input, x_input, y_input, y_input, N])
+        rows = cursor.fetchall()
 
-    # Compute covariance matrix
-    cov_matrix = np.cov(data_standardized, rowvar=False)
+    filenames = [row[0] for row in rows]
 
-    # Perform eigen-decomposition
-    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
-
-    # Compute whitening matrix
-    whitening_matrix = eigenvectors @ np.diag(1.0 / np.sqrt(eigenvalues)) @ eigenvectors.T
-
-    # Apply whitening
-    data_whitened = data_standardized @ whitening_matrix
-
-    # Update DataFrame
-    df[columns] = data_whitened
-    return df
+    return filenames
 
 
 def dropdown(request):
@@ -225,7 +222,6 @@ def dropdown(request):
 def read_data_create_plot(CATEGORY):
     # UPDATE TO READ CORRESPONDING
     df = pd.read_csv(CATEGORY)
-    df = whiten_data(df, ['x', 'y'])
     plot = create_plot(df)
     return (df, plot)
 
