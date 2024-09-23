@@ -139,10 +139,8 @@ def click(request):
             print(f"Received coordinates: x={x}, y={y}")
             # X AND Y ARE RECEIVED CORRECTLY
 
-            N = 16
+            N = 8
             top_N_filenames = get_most_similar(x_input=x, y_input=y, N=N)
-            # GET MOST SIMILAR HAS AN ISSUE... SEE FUNCTION DEFINITION
-            top_N_filenames = remove_duplicate_style(top_N_filenames)
 
             # Initialize Dropbox with refresh capabilities
             dbx = Dropbox(
@@ -224,7 +222,7 @@ def read_data_create_plot(CATEGORY):
     plot = create_plot(df)
     return (df, plot)
 
-df, plot = read_data_create_plot("data_no_dupes.csv")
+df, plot = read_data_create_plot("data.csv")
 
 # READ OTHER CSV FILE...
-# IE. mens_shirts_df = pd.read_csv("data.csv")
+# IE. mens_shirts_df = pd.read_csv("???.csv")
