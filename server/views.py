@@ -104,7 +104,7 @@ def create_plot(df):
     config = {'displayModeBar': False}
     fig = go.Figure(data=heatmap_data)
     fig.update_layout(
-        title="VGG Latent Space of 5K Pants",
+        title="VGG Latent Space of ~2K Pants",
         xaxis=dict(
             showgrid=False,
             zeroline=False,
@@ -224,7 +224,7 @@ def read_data_create_plot(CATEGORY):
     plot = create_plot(df)
     return (df, plot)
 
-df, plot = read_data_create_plot("data.csv")
+df, plot = read_data_create_plot("data_no_dupes.csv")
 
 # READ OTHER CSV FILE...
 # IE. mens_shirts_df = pd.read_csv("data.csv")
