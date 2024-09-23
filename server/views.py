@@ -137,9 +137,11 @@ def click(request):
             x = data.get("x")
             y = data.get("y")
             print(f"Received coordinates: x={x}, y={y}")
+            # X AND Y ARE RECEIVED CORRECTLY
 
             N = 16
             top_N_filenames = get_most_similar(x_input=x, y_input=y, N=N)
+            # GET MOST SIMILAR HAS AN ISSUE... SEE FUNCTION DEFINITION
             top_N_filenames = remove_duplicate_style(top_N_filenames)
 
             # Initialize Dropbox with refresh capabilities
@@ -190,17 +192,14 @@ def get_most_similar(x_input, y_input, N=5):
     x_input = float(x_input)
     y_input = float(y_input)
     N = int(N)
+
     with connections['data'].cursor() as cursor:
-        # SQL query to find the top N closest points
-        query = '''
+        query = """
         SELECT filename
         FROM mens_pants
-        JOIN mens_pants_rtree ON mens_pants.rowid = mens_pants_rtree.id
-        ORDER BY ((mens_pants_rtree.min_x - ?) * (mens_pants_rtree.min_x - ?) +
-                  (mens_pants_rtree.min_y - ?) * (mens_pants_rtree.min_y - ?)) ASC
-        LIMIT ?;
-        '''
-
+        ORDER BY (x - %s) * (x - %s) + (y - %s) * (y - %s)
+        LIMIT %s
+        """
         cursor.execute(query, [x_input, x_input, y_input, y_input, N])
         rows = cursor.fetchall()
 
