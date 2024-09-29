@@ -106,6 +106,12 @@
             font-size: 16px;
             border: none;
             cursor: pointer;
+            width: 6vw;
+            min-width: 150px;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden; /* Test - ollie */
+            text-overflow: ellipsis; /* overflow check */
         }
 
         /* Dropdown content (hidden by default) */
@@ -113,9 +119,14 @@
             display: none;
             position: absolute;
             background-color: #f9f9f9;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            /* Responsive sizing for dropdown container */
+            width: auto; /* Allow the dropdown to grow/shrink dynamically */
+            min-width: 100%; /* Dropdown at least as wide as the button */
+            max-width: 100vw; /* Prevent dropdown from exceeding viewport width */
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
             z-index: 1;
+            overflow: hidden; /* Prevent content overflow */
+            right: 0;
         }
 
         /* Dropdown content links */
@@ -124,6 +135,10 @@
             padding: 12px 16px;
             text-decoration: none;
             display: block;
+            overflow: hidden; /* Hide overflowed text */
+            text-overflow: ellipsis; /* Add ellipsis for overflowing text */
+            max-width: 100%; /* Keep the width within 100% of the parent */
+
         }
 
         /* Show the dropdown content when hovering */
@@ -146,8 +161,9 @@
         <div class="dropdown">
             <button class="dropbtn">Options</button>
             <div class="dropdown-content">
-                <a href="{% url 'dropdown' %}?option=mens_pants">Men's Pants</a>
-                <a href="{% url 'dropdown' %}?option=other">Other</a>
+                <a href="{% url 'dropdown' %}?option=1">Men's Pants</a>
+                <a href="{% url 'dropdown' %}?option=2">Other</a>
+                <a href="{% url 'dropdown' %}?option=3">Test</a>
             </div>
         </div>
     </div>
