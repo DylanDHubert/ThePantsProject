@@ -207,14 +207,16 @@ def get_most_similar(x_input, y_input, N=5):
 
 
 def dropdown(request):
-    # FUNCTION HERE
-    if request.method == "POST":
-        return -1
-        # GET THE POST DATA, SEE WHAT CATEGORY IS SELECTED,
-        # OR, SET GLOBAL VARIABLE CATEGORY => "request.CATEGORY"
-        # RETURN EXACTLY THIS: render(request, "index.html", {"plot_data": plot})
+    global CATEGORY
+    selected_option = request.GET.get('option')
+    if selected_option == 1: CATEGORY = "mens_pants"
+    elif selected_option == 2: CATEGORY = "other"
+    else: CATEGORY = None
+    print(CATEGORY)
 
 
+
+# THIS NEEDS TO BE UPDATED TO RUN ON THE SQLITE DATABASE
 # CODE TO READ AND MANIPLATE DATA BEFORE PLOTTING
 def read_data_create_plot(CATEGORY):
     # UPDATE TO READ CORRESPONDING
