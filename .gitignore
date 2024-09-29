@@ -1,2 +1,5 @@
 / db.sqlite3
 / poetry.lock
+/ .env
+/ utils.py
+/ .gitignore
