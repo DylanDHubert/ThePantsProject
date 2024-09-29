@@ -1,3 +1,5 @@
+
+# DJANGO IMPORTS
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
@@ -7,24 +9,20 @@ from django.http import HttpResponse, JsonResponse
 from dropbox.exceptions import AuthError
 from django.db import connections
 
+# OPERATIONAL IMPORTS
 import json
 import os
 
+# DROPBOX SYSTEM IMPORTS
 from dotenv import load_dotenv
 from dropbox import Dropbox
 
-import numpy as np
-import pandas as pd
-import plotly.io as pio
-import plotly.graph_objects as go
+# UTILITY FUNCTIONS
+import utils
 
-DEBUG = True
-load_dotenv()
-
-CATEGORY = ...  # ie CATEGORY in ["mens_pants", "mens_shirts", etc]
-# CATEGORY SHOULD BE UPDATED BASED UPON DROPDOWN SELECTION
-# WHICH MEANS DROPDOWN NEEDS TO CALL A FUNCTION HERE IN views.py THAT CHANGES THE STATE OF CATEGORY
-# AND RE–RENDERS index.html ACCORDINGLY
+# —————————————————————————————————————
+# ENDPOINTS
+# —————————————————————————————————————
 
 @login_required
 def index(request):
@@ -89,46 +87,7 @@ def logout_handler(request):
         print("LOGOUT CONFIRMED")
     return redirect("login")
 
-
-def create_plot(df):
-    heatmap_data = go.Histogram2d(
-        x=df["x"],
-        y=df["y"],
-        colorscale=[[0, "rgba(0,0,0,0)"], [1, "#89764a "]],
-        zsmooth=False,
-        nbinsy=200,
-        nbinsx=200,
-        hovertemplate="<b>X:</b> %{x}<br><b>Y:</b> %{y}<br><b>Density:</b> %{z}<extra></extra>",
-        showscale=False,
-    )
-    config = {'displayModeBar': False}
-    fig = go.Figure(data=heatmap_data)
-    fig.update_layout(
-        title="VGG Latent Space of ~2K Pants",
-        xaxis=dict(
-            showgrid=False,
-            zeroline=False,
-            showticklabels=False,
-            showline=False,
-        ),
-        yaxis=dict(
-            showgrid=False,
-            zeroline=False,
-            showticklabels=False,
-            showline=False,
-        ),
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        modebar=dict(
-            orientation='v',
-            bgcolor='rgba(0,0,0,0)',  # Set modebar background color to transparent
-            activecolor='rgba(0,0,0,0)',  # Set modebar active color to transparent
-        ),
-    )
-
-    return pio.to_json(fig)
-
-# THIS FUNCTION SHOULD LOOK AT GLOBAL VARIABLE CATEGORYS AND ENSURE df CORRESPONDS
+# GETS CLICK ON GRAPH AND SEARCHES LATENT SPACE (IN data.sqlite3)
 def click(request):
     if request.method == "POST":
         print("Received POST request to /click/")
@@ -139,8 +98,9 @@ def click(request):
             print(f"Received coordinates: x={x}, y={y}")
             # X AND Y ARE RECEIVED CORRECTLY
 
+            # GET TOP N MOST SIMILAR (USING data.sqlite3)
             N = 8
-            top_N_filenames = get_most_similar(x_input=x, y_input=y, N=N)
+            top_N_filenames = utils.get_most_similar(x_input=x, y_input=y, N=N)
 
             # Initialize Dropbox with refresh capabilities
             dbx = Dropbox(
@@ -150,8 +110,7 @@ def click(request):
             )
             print("Dropbox initialized with refresh capability")
 
-
-            # Get temporary links for the top 3 images
+            # GET TEMP. LINKS FOR TOP N IMAGES
             image_links = []
             for filename in top_N_filenames:
                 try:
@@ -178,53 +137,23 @@ def click(request):
         return JsonResponse({"status": "error", "message": "Invalid request method"})
 
 
-def remove_duplicate_style(filenames):
-    result = []
-    for filename in filenames:
-        if not any(filename[-20:] == f[-20:] for f in result):
-            result.append(filename)
-    return result[0:8]
-
-
-def get_most_similar(x_input, y_input, N=5):
-    x_input = float(x_input)
-    y_input = float(y_input)
-    N = int(N)
-
-    with connections['data'].cursor() as cursor:
-        query = """
-        SELECT filename
-        FROM mens_pants
-        ORDER BY (x - %s) * (x - %s) + (y - %s) * (y - %s)
-        LIMIT %s
-        """
-        cursor.execute(query, [x_input, x_input, y_input, y_input, N])
-        rows = cursor.fetchall()
-
-    filenames = [row[0] for row in rows]
-
-    return filenames
-
-
+# CHANGES CATEGORY BASED ON DROPDOWN SELECTION
 def dropdown(request):
-    global CATEGORY
-    selected_option = request.GET.get('option')
-    if selected_option == 1: CATEGORY = "mens_pants"
-    elif selected_option == 2: CATEGORY = "other"
-    else: CATEGORY = None
-    print(CATEGORY)
+    utils.change_category(request.GET.get('option'))
+    return redirect("index")
 
+# —————————————————————————————————————
+# "MAIN" CODE
+# —————————————————————————————————————
 
+# DEBUG SETTING
+DEBUG = True
 
-# THIS NEEDS TO BE UPDATED TO RUN ON THE SQLITE DATABASE
-# CODE TO READ AND MANIPLATE DATA BEFORE PLOTTING
-def read_data_create_plot(CATEGORY):
-    # UPDATE TO READ CORRESPONDING
-    df = pd.read_csv(CATEGORY)
-    plot = create_plot(df)
-    return (df, plot)
+# "CATEGORY" FOR DISPLAY, DEFAULTS TO mens_pants
+CATEGORY = "mens_pants"
+# CREATE plot FOR INITIAL LOAD...
+plot = utils.create_plot(CATEGORY=CATEGORY)
 
-df, plot = read_data_create_plot("data.csv")
+# LOAD DROPBOX THING
+load_dotenv()
 
-# READ OTHER CSV FILE...
-# IE. mens_shirts_df = pd.read_csv("???.csv")
