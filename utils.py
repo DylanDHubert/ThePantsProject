@@ -2,7 +2,10 @@ from django.db import connections
 import plotly.io as pio
 import plotly.graph_objects as go
 
-def create_plot_helper(CATEGORY):
+
+# CREATE PLOT OBJECT FROM DATA OF data.sqlite TABLE: "CATEGORY"
+def create_plot(CATEGORY):
+    # SEARCH DATABASE data, AND GET RESULTS FOR X, Y COORDS
     with connections['data'].cursor() as cursor:
         query = f"SELECT x, y FROM {CATEGORY}"
         cursor.execute(query)
@@ -10,6 +13,7 @@ def create_plot_helper(CATEGORY):
 
     x, y = zip(*results)
 
+    # GENERATE PLOTLY "HEATMAP"
     heatmap_data = go.Histogram2d(
         x=x,
         y=y,
@@ -20,6 +24,7 @@ def create_plot_helper(CATEGORY):
         hovertemplate="<b>X:</b> %{x}<br><b>Y:</b> %{y}<br><b>Density:</b> %{z}<extra></extra>",
         showscale=False,
     )
+    # ADDITIONAL MODIFICATIONS TO DISPLAY
     fig = go.Figure(data=heatmap_data)
     fig.update_layout(
         title="VGG Latent Space of ~2K Pants",
@@ -43,9 +48,11 @@ def create_plot_helper(CATEGORY):
             activecolor='rgba(0,0,0,0)',  # Set modebar active color to transparent
         ),
     )
-
+    # RETURN AS JSON
     return pio.to_json(fig)
 
+
+# SEARCH DATA OF data.sqlite TABLE: "CATEGORY" TO FIND NEAREST N ENTRIES
 def get_most_similar(x_input, y_input, N=5):
     x_input = float(x_input)
     y_input = float(y_input)
@@ -66,12 +73,9 @@ def get_most_similar(x_input, y_input, N=5):
 
     return filenames
 
+
 # CHANGES GLOBAL CATEGORY VARIABLE AND UPDATES GLOBAL plot VARIABLE TO CORRESPOND
 def change_category(new_catagory):
     global CATEGORY, plot
     CATEGORY = new_catagory
     plot = create_plot(CATEGORY=new_catagory)
-
-def create_plot(CATEGORY):
-    plot = create_plot_helper(CATEGORY=CATEGORY)
-    return plot
