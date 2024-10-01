@@ -1,4 +1,3 @@
-
 # DJANGO IMPORTS
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
@@ -19,6 +18,7 @@ from dropbox import Dropbox
 
 # UTILITY FUNCTIONS
 import utils
+
 
 # —————————————————————————————————————
 # ENDPOINTS
@@ -87,6 +87,7 @@ def logout_handler(request):
         print("LOGOUT CONFIRMED")
     return redirect("login")
 
+
 # GETS CLICK ON GRAPH AND SEARCHES LATENT SPACE (IN data.sqlite3)
 def click(request):
     if request.method == "POST":
@@ -142,6 +143,7 @@ def dropdown(request):
     utils.change_category(request.GET.get('option'))
     return redirect("index")
 
+
 # —————————————————————————————————————
 # "MAIN" CODE
 # —————————————————————————————————————
@@ -156,4 +158,3 @@ plot = utils.create_plot(CATEGORY=CATEGORY)
 
 # LOAD DROPBOX THING
 load_dotenv()
-
