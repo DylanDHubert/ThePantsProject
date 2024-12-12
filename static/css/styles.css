@@ -1,124 +1,151 @@
+/* General Styling */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
-    background: #FFFFFF;
+    background-color: #f4f4f4;
     color: #333;
-    height: 100vh;
     display: flex;
     flex-direction: column;
+    height: 100vh;
 }
 
+/* Header Styling */
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background-color: #f0f0f0;
+    background-color: #4CAF50;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    height: 30px;
-    /* Fixed height */
+    color: white;
 }
 
-.header p {
-    margin: 0;
+.logo img {
+    height: 40px;
+    width: auto;
+}
+
+/* Dropdown Styling */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-button {
+    background-color: #FF6A8A;
+    color: white;
+    padding: 10px 15px;
     font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.dropdown-button:hover {
+    background-color: #FF5277;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 5px;
+}
+
+.dropdown-content a {
+    color: #333;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.3s;
+    font-size: 14px;
+}
+
+.dropdown-content a:hover {
+    background-color: #f1f1f1;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* User Info Styling */
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-info .logged-in-as {
+    font-size: 14px;
+    margin-right: 20px;
 }
 
 .logout button {
-    background-color: #afafaf;
+    background-color: #FF6A8A;
     color: white;
     padding: 8px 16px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
+    transition: background-color 0.3s;
 }
 
 .logout button:hover {
-    background-color: #aaaaaa;
+    background-color: #FF5277;
 }
 
+/* Content Area Styling */
 .content {
     display: flex;
-    padding: 20px;
     flex: 1;
-    height: calc(100vh - 60px);
+    padding: 20px;
     box-sizing: border-box;
+    height: calc(100vh - 60px);
 }
 
 .scatter-container {
-    flex: 0.5;
+    flex: 0.6;
     margin-right: 20px;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0);
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
 
-.scatter-container #scatter-plot {
+#scatter-plot {
     width: 100%;
     height: 100%;
 }
 
+/* Image Container Styling */
 .images-container {
+    flex: 0.4;
     display: grid;
-    grid-template-columns: repeat(4, 2fr);
-    grid-template-rows: repeat(2, 2fr);
-    gap: 10px; /* Adjust the gap between images */
-    flex: 0.5; /* Adjust flex if needed to fit your layout */
-    overflow-y: auto; /* Enable scrolling if needed */
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 5px;
+    overflow-y: auto;
 }
 
 .images-container img {
     width: 100%;
-
-    aspect-ratio: 1 / 1;
+    height: auto;
     object-fit: cover;
-    border-radius: 5px; /* Adjust border radius if needed */
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .loading {
     display: none;
     text-align: center;
     padding: 20px;
-}
-
-.dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-/* Dropdown button */
-.dropbtn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px;
+    color: #4CAF50;
     font-size: 16px;
-    border: none;
-    cursor: pointer;
-}
-
-/* Dropdown content (hidden by default) */
-.dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: #f9f9f9;
-    min-width: 160px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
-}
-
-/* Dropdown content links */
-.dropdown-content a {
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
-}
-
-/* Show the dropdown content when hovering */
-.dropdown:hover .dropdown-content {
-    display: block;
 }

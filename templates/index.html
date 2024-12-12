@@ -1,5 +1,4 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,36 +12,44 @@
 
 <body>
     <div class="header">
-        <p>You are logged in as: <strong>{{ user.username }}</strong></p>
-        <form action="{% url 'logout' %}" method="post" class="logout">
-            {% csrf_token %}
-            <button type="submit">Logout</button>
-        </form>
-        <!-- DROPDOWN MENU -->
+        <div class="logo">
+            <img src="{% static '/images/logo.png' %}" alt="Logo">
+        </div>
+
         <div class="dropdown">
-            <button class="dropbtn">Options</button>
+            <button class="dropdown-button">Options</button>
             <div class="dropdown-content">
                 <a href="{% url 'dropdown' %}?option=mens_pants">Men's Pants</a>
                 <a href="{% url 'dropdown' %}?option=other">Other</a>
             </div>
         </div>
+
+        <div class="user-info">
+            <div class="logged-in-as">
+                <p>You are logged in as: <strong>{{ user.username }}</strong></p>
+            </div>
+            <form action="{% url 'logout' %}" method="post" class="logout">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        </div>
     </div>
 
     <div class="content">
-        <!-- HEATMAP -->
         <div class="scatter-container">
-            <div id="scatter-plot" style="width: 100%; height: 100%;" data-plot-data='{{ plot_data|safe }}' data-csrf-token="{{ csrf_token }}"></div>
+            <div id="scatter-plot" data-plot-data='{{ plot_data|safe }}' data-csrf-token="{{ csrf_token }}"></div>
         </div>
-        <!-- IMAGES -->
+
         <div class="images-container" id="images-container">
-            <!-- IMAGES DYNAMICALLY INSERTED HERE (ON RUNTIME) -->
+            <!-- Dynamically Inserted Images -->
         </div>
         <div class="loading" id="loading">Loading images...</div>
     </div>
+
     <script src="{% static 'scripts/index.js' %}" defer></script>
     <script>
-        window.plotDataJson = JSON.parse('{{ plot_data|safe }}');  // Now globally accessible
-        window.csrfToken = '{{ csrf_token }}';  // Now globally accessible
+        window.plotDataJson = JSON.parse('{{ plot_data|safe }}');
+        window.csrfToken = '{{ csrf_token }}';
     </script>
 </body>
 </html>
