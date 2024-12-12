@@ -100,7 +100,7 @@ def click(request):
             # X AND Y ARE RECEIVED CORRECTLY
 
             # GET TOP N MOST SIMILAR (USING data.sqlite3)
-            N = 8
+            N = 6
             top_N_filenames = utils.get_most_similar(x_input=x, y_input=y, N=N)
 
             # Initialize Dropbox with refresh capabilities
