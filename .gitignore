@@ -3,3 +3,4 @@
 / .env
 / utils.py
 / .gitignore
+GAN/pantsGAN_checkpoint_180.pkl
