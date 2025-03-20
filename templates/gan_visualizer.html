@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="text-center">Pants Explorer</h1>
+    
+    {% if gan_warning %}
+    <div class="alert alert-warning" role="alert">
+        {{ gan_warning }}
+    </div>
+    {% endif %}
+    
+    <!-- Debug info -->
+    <div class="alert alert-info">
+        <strong>Debugging Info:</strong>
+        <ul>
+            <li>StyleGAN Available: {{ stylegan_available }}</li>
+            <li>Vector Z1 present: {% if z1 %}Yes{% else %}No{% endif %}</li>
+            <li>Vector Z2 present: {% if z2 %}Yes{% else %}No{% endif %}</li>
+            <li>Initial image: {% if initial_image %}Yes{% else %}No{% endif %}</li>
+        </ul>
+        <p>Check browser console (F12) for debugging logs.</p>
+    </div>
+    
+    <div class="row">
+        <!-- Left side - Minimal canvas for 2D latent space exploration -->
+        <div class="col-md-6">
+            <div style="position: relative; height: 500px; border: 2px dashed #ccc; background-color: #f8f9fa;">
+                <canvas id="latentCanvas" width="100%" height="100%" style="background-color: white; width: 100%; height: 100%; cursor: pointer;"></canvas>
+                <div style="position: absolute; top: 10px; left: 10px; background-color: rgba(255,255,255,0.7); padding: 5px; border-radius: 3px;">
+                    <small>Click or drag the red dot</small>
+                </div>
+            </div>
+            
+            <!-- Minimal controls -->
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+                <button id="regenerateBtn" class="btn btn-outline-primary">
+                    Regenerate
+                </button>
+                
+                <span class="text-muted">Position: <span id="positionDisplay">0.00, 0.00</span></span>
+                
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="autoGenerateSwitch" checked>
+                    <label class="form-check-label" for="autoGenerateSwitch">Auto-generate</label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right side - Minimal image display -->
+        <div class="col-md-6">
+            <div class="text-center position-relative" style="height: 500px; display: flex; align-items: center; justify-content: center;">
+                <img id="pantsImage" src="{% if initial_image %}{{ initial_image }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" 
+                     alt="Generated Pants" class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                <div class="spinner-border text-primary d-none position-absolute" style="top: 50%; left: 50%;" id="imageSpinner">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="mt-3 text-center">
+                <button id="generateBtn" class="btn btn-primary">Generate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden vector storage -->
+<div id="vectorData" data-z1='{{ z1|safe }}' data-z2='{{ z2|safe }}' data-num-features="{{ num_features }}"></div>
+
+<!-- Add Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("GAN visualizer script loading...");
+        // Get vector data from hidden div
+        const vectorData = document.getElementById('vectorData');
+        console.log("Vector data element:", vectorData);
+        console.log("Vector data z1:", vectorData.dataset.z1);
+        console.log("Vector data z2:", vectorData.dataset.z2);
+        
+        let z1 = null;
+        let z2 = null;
+        
+        try {
+            z1 = JSON.parse(vectorData.dataset.z1);
+            z2 = JSON.parse(vectorData.dataset.z2);
+            console.log("Successfully parsed z1 and z2");
+        } catch (error) {
+            console.error("Error parsing vector data:", error);
+            // Set fallback values
+            z1 = Array(512).fill(0).map(() => Math.random() - 0.5);
+            z2 = Array(512).fill(0).map(() => Math.random() - 0.5);
+            console.log("Using fallback random vectors");
+        }
+        
+        // Get UI elements
+        const generateBtn = document.getElementById('generateBtn');
+        const regenerateBtn = document.getElementById('regenerateBtn');
+        const pantsImage = document.getElementById('pantsImage');
+        const canvas = document.getElementById('latentCanvas');
+        const autoGenerateSwitch = document.getElementById('autoGenerateSwitch');
+        const positionDisplay = document.getElementById('positionDisplay');
+        const imageSpinner = document.getElementById('imageSpinner');
+        
+        // Canvas interaction state
+        let canvasPoint = { x: 0, y: 0 }; // Initialize with dummy values first
+        console.log("Initialized canvas point with default values");
+        
+        // Set canvas size to match parent container
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            // Update canvas point to center if it's at default position
+            if (canvasPoint.x === 0 && canvasPoint.y === 0) {
+                canvasPoint.x = canvas.width / 2;
+                canvasPoint.y = canvas.height / 2;
+            }
+            
+            console.log("Canvas resized to:", canvas.width, "x", canvas.height);
+            console.log("Canvas point after resize:", canvasPoint);
+            
+            drawCanvas(); // Redraw after resize
+        }
+        
+        // Initialize canvas
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        let isDragging = false;
+        let currentLatentVector = null;
+        
+        // Generate two random principal directions for exploration
+        const direction1 = z1;
+        const direction2 = z2;
+        
+        // Canvas event handlers
+        canvas.addEventListener('mousedown', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check if click is close to the point
+            const distance = Math.sqrt(Math.pow(x - canvasPoint.x, 2) + Math.pow(y - canvasPoint.y, 2));
+            
+            if (distance < 15) {
+                isDragging = true;
+            } else {
+                // Move point directly to clicked location
+                canvasPoint.x = x;
+                canvasPoint.y = y;
+                drawCanvas();
+                if (autoGenerateSwitch.checked) {
+                    generateImage();
+                }
+            }
+        });
+        
+        canvas.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            canvasPoint.x = e.clientX - rect.left;
+            canvasPoint.y = e.clientY - rect.top;
+            
+            // Constrain to canvas bounds
+            canvasPoint.x = Math.max(10, Math.min(canvas.width - 10, canvasPoint.x));
+            canvasPoint.y = Math.max(10, Math.min(canvas.height - 10, canvasPoint.y));
+            
+            drawCanvas();
+            updatePositionDisplay();
+            
+            // Throttle image generation during drag for better performance
+            if (autoGenerateSwitch.checked) {
+                clearTimeout(window.dragTimeout);
+                window.dragTimeout = setTimeout(generateImage, 300);
+            }
+        });
+        
+        canvas.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                if (autoGenerateSwitch.checked) {
+                    generateImage();
+                }
+            }
+        });
+        
+        canvas.addEventListener('mouseleave', function() {
+            isDragging = false;
+        });
+        
+        // Regenerate button - get new random directions
+        regenerateBtn.addEventListener('click', function() {
+            fetch('/gan-new-vectors/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update our vectors
+                    z1 = data.z1;
+                    z2 = data.z2;
+                    
+                    // Reset the canvas point to center
+                    canvasPoint = { x: canvas.width / 2, y: canvas.height / 2 };
+                    drawCanvas();
+                    
+                    // Generate a new image
+                    generateImage();
+                }
+            });
+        });
+        
+        // Update the position display
+        function updatePositionDisplay() {
+            // Convert from canvas pixels to -1,1 range
+            const normX = ((canvasPoint.x / canvas.width) * 2 - 1).toFixed(2);
+            const normY = ((canvasPoint.y / canvas.height) * 2 - 1).toFixed(2);
+            positionDisplay.textContent = `${normX}, ${normY}`;
+        }
+        
+        // Draw canvas with current state
+        function drawCanvas() {
+            console.log("Drawing canvas with point at:", canvasPoint.x, canvasPoint.y);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw x and y axes
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            
+            // Draw x-axis
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            
+            // Draw y-axis
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            
+            // Draw arrows on x-axis
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - 10, canvas.height / 2 - 5);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.lineTo(canvas.width - 10, canvas.height / 2 + 5);
+            ctx.stroke();
+            
+            // Draw arrows on y-axis (negative direction)
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2 - 5, 10);
+            ctx.lineTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2 + 5, 10);
+            ctx.stroke();
+            
+            // Draw arrows on y-axis (positive direction)
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2 - 5, canvas.height - 10);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.lineTo(canvas.width / 2 + 5, canvas.height - 10);
+            ctx.stroke();
+            
+            // Draw interaction point with larger, more visible dot
+            ctx.fillStyle = 'red';  // Changed from black to red for visibility
+            ctx.beginPath();
+            ctx.arc(canvasPoint.x, canvasPoint.y, 15, 0, Math.PI * 2); // Increased size from 8 to 15
+            ctx.fill();
+            
+            // Add a contrasting border to the dot
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(canvasPoint.x, canvasPoint.y, 15, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Update position display
+            updatePositionDisplay();
+        }
+        
+        // Map canvas coordinates to latent space vector
+        function canvasToLatentVector() {
+            // Normalize canvas coordinates to -1,1 range
+            const normX = (canvasPoint.x / canvas.width) * 2 - 1;
+            const normY = (canvasPoint.y / canvas.height) * 2 - 1;
+            
+            // Clone vectors to avoid modifying originals
+            const baseVector = [...z1[0]];
+            
+            // Use the two random directions
+            for (let i = 0; i < baseVector.length; i++) {
+                baseVector[i] = z1[0][i] + normX * direction1[0][i] + normY * direction2[0][i];
+            }
+            
+            return [baseVector];
+        }
+        
+        // Generate image based on current canvas position
+        function generateImage() {
+            console.log("Generating image for position:", canvasPoint);
+            
+            // Disable buttons during generation
+            generateBtn.disabled = true;
+            
+            // Show loading spinner on image
+            imageSpinner.classList.remove('d-none');
+            
+            // Get current latent vector from canvas position
+            const latentVector = canvasToLatentVector();
+            console.log("Calculated latent vector:", latentVector);
+            
+            // Prepare request data
+            const requestData = {
+                vector_type: 'custom',
+                latent_vector: latentVector,
+                truncation: 0.7
+            };
+            
+            console.log("Sending request to server:", requestData);
+            
+            // Send request to server
+            fetch('/gan-generate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                console.log("Received response:", response);
+                return response.json();
+            })
+            .then(data => {
+                console.log("Received data:", data);
+                if (data.status === 'success' || data.status === 'warning') {
+                    // Update the image if we got one
+                    if (data.image) {
+                        console.log("Setting new image source");
+                        pantsImage.src = data.image;
+                        currentLatentVector = latentVector;
+                    } else {
+                        console.warn("No image in response");
+                    }
+                } else {
+                    console.error("Error status in response:", data.status, data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                // Re-enable the button
+                generateBtn.disabled = false;
+                
+                // Hide loading spinner
+                imageSpinner.classList.add('d-none');
+                console.log("Image generation complete");
+            });
+        }
+        
+        // Add event listeners to buttons
+        generateBtn.addEventListener('click', generateImage);
+        
+        // Initialize the canvas
+        drawCanvas();
+        
+        // Generate initial image when page loads (if needed)
+        if (z1 && z2 && !pantsImage.src.includes("placeholder")) {
+            // No need to generate if we already have an initial image
+        } else if (z1 && z2) {
+            generateImage();
+        }
+    });
+</script>
+{% endblock %}

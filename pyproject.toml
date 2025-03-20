@@ -4,13 +4,19 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.11"
 django = "^5.1.1"
-numpy = "^2.1.1"
+numpy = ">=1.26.0"
 pandas = "^2.2.2"
 plotly = "^5.24.0"
 dropbox = "^12.0.2"
 environ = "^1.0"
 django-environ = "^0.11.2"
 load-dotenv = "^0.1.0"
+torch = "^2.1.0"
+torchvision = "^0.16.0" 
+pillow = "^10.1.0"
+ninja = "^1.11.1"
+click = "^8.1.8"
+scipy = "^1.15.2"
 
 
 [build-system]

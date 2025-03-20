@@ -29,7 +29,12 @@ urlpatterns = [
     path('logout/', views.logout_handler, name='logout'),
     path('click/', views.click, name='click'),
     path('external-images/<path:filename>', serve, {'document_root': '/users/dylanhubert/Downloads/images/'}, name='external-images'),
-    path('dropdown/', views.dropdown, name='dropdown')
+    path('dropdown/', views.dropdown, name='dropdown'),
+    
+    # GAN-related endpoints
+    path('gan-visualizer/', views.gan_visualizer, name='gan_visualizer'),
+    path('gan-generate/', views.gan_generate, name='gan_generate'),
+    path('gan-new-vectors/', views.gan_new_vectors, name='gan_new_vectors'),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
