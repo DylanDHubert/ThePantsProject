@@ -1,6 +1,5 @@
-/ db.sqlite3
-/ poetry.lock
-/ .env
-/ utils.py
-/ .gitignore
+db.sqlite3
+poetry.lock
+.env
+utils.py
 GAN/pantsGAN_checkpoint_180.pkl
